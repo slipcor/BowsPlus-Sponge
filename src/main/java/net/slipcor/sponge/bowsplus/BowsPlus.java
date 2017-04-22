@@ -6,6 +6,7 @@ import net.slipcor.sponge.bowsplus.cmds.SubCommand;
 import net.slipcor.sponge.bowsplus.cmds.admin.CmdReload;
 import net.slipcor.sponge.bowsplus.cmds.user.CmdEntity;
 import net.slipcor.sponge.bowsplus.cmds.user.CmdItem;
+import net.slipcor.sponge.bowsplus.cmds.user.CmdReset;
 import net.slipcor.sponge.bowsplus.utils.*;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
@@ -47,7 +48,7 @@ public class BowsPlus {
         this.logger = logger;
     }
 
-    public void applyMeta(Player player, String key, Callable cmd, String value) {
+    public void applyMeta(Player player, String key, Callable cmd, Object value) {
         callMap.put(player.getName(), new CallContainer(key, cmd, value));
     }
 
@@ -71,11 +72,14 @@ public class BowsPlus {
         return true;
     }
 
+    public void removeMeta(Player player) {
+        callMap.remove(player.getName());
+    }
+
     @Listener
     public void onPreInit(final GameInitializationEvent event){
         if (!loadConfig() || !loadLanguage()) {
             Sponge.getServer().getConsole().sendMessage(Language.ERROR_CONFIG_LOAD.red());
-            return;
         }
     }
 
@@ -87,6 +91,8 @@ public class BowsPlus {
 
         subCommands.add(new CmdEntity(this));
         subCommands.add(new CmdItem(this));
+
+        subCommands.add(new CmdReset(this));
 
         // initiate main command
         new BowsPlusMain(this, subCommands);

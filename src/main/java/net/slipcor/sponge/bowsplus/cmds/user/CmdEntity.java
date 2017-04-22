@@ -3,11 +3,7 @@ package net.slipcor.sponge.bowsplus.cmds.user;
 import com.flowpowered.math.vector.Vector3d;
 import net.slipcor.sponge.bowsplus.BowsPlus;
 import net.slipcor.sponge.bowsplus.cmds.SubCommand;
-import net.slipcor.sponge.bowsplus.utils.Callable;
-import net.slipcor.sponge.bowsplus.utils.Config;
-import net.slipcor.sponge.bowsplus.utils.Language;
-import net.slipcor.sponge.bowsplus.utils.Perms;
-import org.spongepowered.api.Sponge;
+import net.slipcor.sponge.bowsplus.utils.*;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -30,7 +26,7 @@ public class CmdEntity extends SubCommand implements Callable {
     final BowsPlus plugin;
     public CmdEntity(final BowsPlus plugin) {
         super(plugin, Arrays.asList(
-                GenericArguments.string(Text.of("entity")),
+                GenericArguments.catalogedElement(Text.of("entity"), EntityType.class),
                 GenericArguments.optional(
                         GenericArguments.string(Text.of("subtype"))
                 )
@@ -45,10 +41,8 @@ public class CmdEntity extends SubCommand implements Callable {
         }
         final Player player = (Player) src;
 
-        Optional<String> oEntity = args.getOne("entity");
-        String entity = oEntity.orElse("sheep");
+        Optional<EntityType> oType = args.getOne("entity");
 
-        Optional<EntityType> oType = Sponge.getRegistry().getType(EntityType.class, entity);
         if (oType.isPresent()) {
             if (Config.getBoolean(Config.EXPLICIT)) {
                 String permission = Perms.TYPE_ENTITY.toString()+"."+oType.get().getName().toLowerCase();
@@ -58,10 +52,10 @@ public class CmdEntity extends SubCommand implements Callable {
                 }
             }
 
-            plugin.applyMeta(player, "entity", this, entity);
-            player.sendMessage(Language.GOOD_SET_BOW.green(Language.TYPE_ENTITY.toString(), entity));
+            plugin.applyMeta(player, "entity", this, oType.get());
+            player.sendMessage(Language.GOOD_SET_BOW.green(Language.TYPE_ENTITY.toString(), oType.get().getName()));
         } else {
-            player.sendMessage(Language.BAD_TYPE_NOT_FOUND.red(Language.TYPE_ENTITY.toString(), entity));
+            player.sendMessage(Language.BAD_TYPE_NOT_FOUND.red(Language.TYPE_ENTITY.toString(), oType.toString()));
             return CommandResult.empty();
         }
 
@@ -69,11 +63,11 @@ public class CmdEntity extends SubCommand implements Callable {
     }
 
     @Override
-    public void attempt(Player player, Arrow arrow, String key, String value) {
+    public void attempt(Player player, Arrow arrow, String key, Object value) {
         //TODO: check player for required material
-        Optional<EntityType> oType = Sponge.getRegistry().getType(EntityType.class, value);
-        if (oType.isPresent()) {
-            EntityType type = oType.get();
+
+        if (value instanceof EntityType) {
+            EntityType type = (EntityType) value;
 
             Vector3d position = arrow.getLocation().getPosition();
             Vector3d velocity = arrow.get(Keys.VELOCITY).orElse(new Vector3d(player.getRotation()));
@@ -84,6 +78,5 @@ public class CmdEntity extends SubCommand implements Callable {
             player.getWorld().spawnEntity(item, Cause.source(EntitySpawnCause.builder()
                     .entity(item).type(SpawnTypes.PLUGIN).build()).build());
         }
-
     }
 }

@@ -21,6 +21,15 @@ public abstract class SubCommand implements CommandExecutor {
                 .executor(this)
                 .build();
         labels = label;
-        Sponge.getCommandManager().register(plugin, cs, label[0]); // only hook the first label as main command!
+        //Sponge.getCommandManager().register(plugin, cs, label[0]); // only hook the first label as main command!
+    }
+    protected SubCommand(final BowsPlus plugin, final List<CommandElement> args, final String description, final String... label) {
+        cs = CommandSpec.builder()
+                .description(Text.of(description))
+                .arguments(args.toArray(new CommandElement[0]))
+                .executor(this)
+                .build();
+        labels = label;
+        //Sponge.getCommandManager().register(plugin, cs, label[0]); // only hook the first label as main command!
     }
 }

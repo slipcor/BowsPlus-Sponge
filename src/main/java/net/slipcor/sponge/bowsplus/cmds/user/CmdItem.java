@@ -3,11 +3,7 @@ package net.slipcor.sponge.bowsplus.cmds.user;
 import com.flowpowered.math.vector.Vector3d;
 import net.slipcor.sponge.bowsplus.BowsPlus;
 import net.slipcor.sponge.bowsplus.cmds.SubCommand;
-import net.slipcor.sponge.bowsplus.utils.Callable;
-import net.slipcor.sponge.bowsplus.utils.Config;
-import net.slipcor.sponge.bowsplus.utils.Language;
-import net.slipcor.sponge.bowsplus.utils.Perms;
-import org.spongepowered.api.Sponge;
+import net.slipcor.sponge.bowsplus.utils.*;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -32,13 +28,14 @@ public class CmdItem extends SubCommand implements Callable {
     final BowsPlus plugin;
     public CmdItem(final BowsPlus plugin) {
         super(plugin, Arrays.asList(
-                GenericArguments.string(Text.of("material")),
+                GenericArguments.catalogedElement(Text.of("material"), ItemType.class),
                 GenericArguments.optional(
                         GenericArguments.string(Text.of("subtype"))
                 )
                 ), Perms.TYPE_ITEM, "Will allow to shoot an item.", "item");
         this.plugin = plugin;
     }
+
     @Override
     public CommandResult execute(final CommandSource src, final CommandContext args) throws CommandException {
         if (!(src instanceof Player)) {
@@ -47,10 +44,8 @@ public class CmdItem extends SubCommand implements Callable {
         }
         final Player player = (Player) src;
 
-        Optional<String> oMaterial = args.getOne("material");
-        String material = oMaterial.orElse("minecraft:cobblestone");
+        Optional<ItemType> oType = args.getOne("material");
 
-        Optional<ItemType> oType = Sponge.getRegistry().getType(ItemType.class, material);
         if (oType.isPresent()) {
             if (Config.getBoolean(Config.EXPLICIT)) {
                 String permission = Perms.TYPE_ITEM.toString()+"."+oType.get().getName().toLowerCase();
@@ -59,10 +54,10 @@ public class CmdItem extends SubCommand implements Callable {
                     return CommandResult.empty();
                 }
             }
-            plugin.applyMeta(player, "item", this, material);
-            player.sendMessage(Language.GOOD_SET_BOW.green(Language.TYPE_ITEM.toString(), material));
+            plugin.applyMeta(player, "item", this, oType.get());
+            player.sendMessage(Language.GOOD_SET_BOW.green(Language.TYPE_ITEM.toString(), oType.get().getName()));
         } else {
-            player.sendMessage(Language.BAD_TYPE_NOT_FOUND.red(Language.TYPE_ITEM.toString(), material));
+            player.sendMessage(Language.BAD_TYPE_NOT_FOUND.red(Language.TYPE_ITEM.toString(), oType.toString()));
             return CommandResult.empty();
         }
 
@@ -70,14 +65,11 @@ public class CmdItem extends SubCommand implements Callable {
     }
 
     @Override
-    public void attempt(Player player, Arrow arrow, String key, String value) {
-        //TODO: check player for required material
-        Optional<ItemType> oType = Sponge.getRegistry().getType(ItemType.class, value);
-        if (oType.isPresent()) {
-            ItemType type = oType.get();
+    public void attempt(Player player, Arrow arrow, String key, Object value) {
+        if (value instanceof ItemType) {
+            ItemType type = (ItemType) value;
 
             ItemStack itemStack = ItemStack.of(type, 1);
-            //itemStack.offer(Keys.TREE_TYPE, tree);
 
             Vector3d position = arrow.getLocation().getPosition();
             Vector3d velocity = arrow.get(Keys.VELOCITY).orElse(new Vector3d(player.getRotation()));
@@ -90,6 +82,5 @@ public class CmdItem extends SubCommand implements Callable {
             player.getWorld().spawnEntity(item, Cause.source(EntitySpawnCause.builder()
                     .entity(item).type(SpawnTypes.PLUGIN).build()).build());
         }
-
     }
 }

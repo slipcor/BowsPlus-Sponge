@@ -6,8 +6,8 @@ import org.spongepowered.api.entity.projectile.arrow.Arrow;
 public class CallContainer {
     String key;
     Callable cmd;
-    String value;
-    public CallContainer(String key, Callable cmd, String value) {
+    Object value;
+    public CallContainer(String key, Callable cmd, Object value) {
         this.key = key;
         this.cmd = cmd;
         this.value = value;

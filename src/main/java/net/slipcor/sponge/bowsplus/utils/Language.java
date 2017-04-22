@@ -17,7 +17,8 @@ public enum Language {
 
     ERROR_COMMAND_ONLY_PLAYERS("error.cmc_only_players", "This is a player only command!"),
 
-    GOOD_SET_BOW("good.set_bow", "Your bow will spawn the %0% %1%"),
+    GOOD_SET_BOW("good.set_bow", "Your bow will spawn the %0% %1%."),
+    GOOD_SET_RESET("good.set_reset", "Your bow will shoot arrows again!"),
 
     TYPE_ENTITY("type.entity", "Entity"),
     TYPE_ITEM("type.item", "Item"),
