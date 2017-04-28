@@ -106,7 +106,7 @@ public class BowsPlus {
         Cause cause = event.getCause();
         Optional<Player> shooter = cause.first(Player.class);
 
-        Optional<Entity> entity = event.getEntities().stream().filter(e -> e instanceof Projectile).findFirst();
+        Optional<Entity> entity = event.getEntities().stream().filter(e -> e instanceof Arrow).findFirst();
 
         if (shooter.isPresent() && entity.isPresent()) {
             Player player = shooter.get();

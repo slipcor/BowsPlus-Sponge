@@ -13,6 +13,7 @@ import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.EntityType;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.entity.projectile.Projectile;
 import org.spongepowered.api.entity.projectile.arrow.Arrow;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.entity.spawn.EntitySpawnCause;
@@ -73,10 +74,14 @@ public class CmdEntity extends SubCommand implements Callable {
             Vector3d velocity = arrow.get(Keys.VELOCITY).orElse(new Vector3d(player.getRotation()));
             arrow.remove();
 
-            final Entity item = player.getWorld().createEntity(type, position);
-            item.offer(Keys.VELOCITY, velocity);
-            player.getWorld().spawnEntity(item, Cause.source(EntitySpawnCause.builder()
-                    .entity(item).type(SpawnTypes.PLUGIN).build()).build());
+            if (Projectile.class.isAssignableFrom(type.getEntityClass())) { // isAssignableFrom(Projectile.class) did not work :P // .getName().contains(".projectile.")
+                player.launchProjectile((Class<Projectile>)type.getEntityClass(), velocity);
+            } else {
+                final Entity item = player.getWorld().createEntity(type, position);
+                item.offer(Keys.VELOCITY, velocity);
+                player.getWorld().spawnEntity(item, Cause.source(EntitySpawnCause.builder()
+                        .entity(item).type(SpawnTypes.PLUGIN).build()).build());
+            }
         }
     }
 }
