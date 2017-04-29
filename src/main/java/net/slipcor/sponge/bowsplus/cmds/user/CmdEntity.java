@@ -12,6 +12,7 @@ import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.EntityType;
+import org.spongepowered.api.entity.EntityTypes;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.projectile.Projectile;
 import org.spongepowered.api.entity.projectile.arrow.Arrow;
@@ -20,11 +21,13 @@ import org.spongepowered.api.event.cause.entity.spawn.EntitySpawnCause;
 import org.spongepowered.api.event.cause.entity.spawn.SpawnTypes;
 import org.spongepowered.api.text.Text;
 
-import java.util.Arrays;
-import java.util.Optional;
+import java.util.*;
 
 public class CmdEntity extends SubCommand implements Callable {
     final BowsPlus plugin;
+    final Map<EntityType, String> unsupportedList = new HashMap<>();
+    final Map<EntityType, String> warningMap = new HashMap<>();
+
     public CmdEntity(final BowsPlus plugin) {
         super(plugin, Arrays.asList(
                 GenericArguments.catalogedElement(Text.of("entity"), EntityType.class),
@@ -33,6 +36,25 @@ public class CmdEntity extends SubCommand implements Callable {
                 )
                 ), Perms.TYPE_ENTITY, "Will allow to shoot an entity.", "entity");
         this.plugin = plugin;
+
+        unsupportedList.put(EntityTypes.COMPLEX_PART, "Is part of the dragon, no standalone use possible");
+        unsupportedList.put(EntityTypes.EYE_OF_ENDER, "Only flies NORTH");
+        unsupportedList.put(EntityTypes.FALLING_BLOCK, "Requires the block subtype");
+        unsupportedList.put(EntityTypes.ITEM, "Please use the item command");
+        unsupportedList.put(EntityTypes.LIGHTNING, "Cannot be summoned this way");
+        unsupportedList.put(EntityTypes.LLAMA_SPIT, "Is invisible or cannot be spawned this way");
+        unsupportedList.put(EntityTypes.PAINTING, "Cannot be spawned this way");
+        unsupportedList.put(EntityTypes.PLAYER, "Requires a proper player profile or NPC/FakePlayer support");
+        unsupportedList.put(EntityTypes.SPECTRAL_ARROW, "Does not work, might need subvalues");
+        unsupportedList.put(EntityTypes.WEATHER, "Does not work");
+
+        warningMap.put(EntityTypes.ENDER_CRYSTAL, "Stationary");
+        warningMap.put(EntityTypes.ENDER_DRAGON, "Flying but stationary");
+        warningMap.put(EntityTypes.EVOCATION_FANGS, "Only shows an animation");
+        warningMap.put(EntityTypes.FISHING_HOOK, "Disappears after launching it");
+        warningMap.put(EntityTypes.LEASH_HITCH, "Is stationary");
+        warningMap.put(EntityTypes.SHULKER_BULLET, "Disappears very quickly");
+
     }
     @Override
     public CommandResult execute(final CommandSource src, final CommandContext args) throws CommandException {
@@ -51,6 +73,18 @@ public class CmdEntity extends SubCommand implements Callable {
                     player.sendMessage(Language.BAD_PERMISSION.red(permission));
                     return CommandResult.empty();
                 }
+            }
+
+            if (oType.get().getId().toLowerCase().equals("minecraft:arrow")) {
+                plugin.removeMeta(player);
+                player.sendMessage(Language.GOOD_SET_RESET.green());
+                return CommandResult.success();
+            } else if (unsupportedList.containsKey(oType.get())) {
+                plugin.removeMeta(player);
+                player.sendMessage(Language.ERROR_ENTITY_NOT_SUPPORTED.red(oType.get().getName(), unsupportedList.get(oType.get())));
+                return CommandResult.success();
+            } else if (warningMap.containsKey(oType.get())) {
+                player.sendMessage(Language.WARN_INCOMPLETE_ENTITY.yellow(warningMap.get(oType.get())));
             }
 
             plugin.applyMeta(player, "entity", this, oType.get());
